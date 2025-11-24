@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Gridiron Analytics – Live Dashboard</title>
+
+<style>
+    body {
+        margin: 0;
+        background: #0d1117;
+        color: white;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+    header {
+        background: #111827;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 4px 10px #0007;
+    }
+    .logo {
+        font-size: 28px;
+        font-weight: bold;
+        color: #3b82f6;
+    }
+    nav {
+        display: flex;
+        overflow-x: auto;
+        background: #1f2937;
+        padding: 12px;
+        gap: 12px;
+        white-space: nowrap;
+        border-bottom: 2px solid #0d1117;
+    }
+    .nav-btn {
+        padding: 8px 16px;
+        background: #374151;
+        border-radius: 8px;
+        color: #d1d5db;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+    .nav-btn:hover {
+        background: #4b5563;
+        color: white;
+    }
+    .active {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+    .section {
+        display: none;
+        padding: 25px;
+    }
+    .section h2 {
+        color: #60a5fa;
+        margin-bottom: 20px;
+        font-size: 26px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 40px;
+    }
+    th, td {
+        border: 1px solid #374151;
+        padding: 8px;
+        text-align: center;
+    }
+    th {
+        background: #1e3a8a;
+    }
+    tr:nth-child(even) td {
+        background: #111827;
+    }
+    tr:nth-child(odd) td {
+        background: #0f172a;
+    }
+</style>
+
+</head>
+<body>
+
+<header>
+    <div class="logo">GA</div>
+    <div>
+        <div>Gridiron Analytics</div>
+        <div style="font-size:12px;color:#9ca3af;">Live American Football Stats Dashboard</div>
+    </div>
+</header>
+
+<nav id="menu"></nav>
+
+<div id="content"></div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbyRufoV3yfgOTYBlZVzQ4UxvbkZD3R2wMszLq30spDLCC89Lb7BEWPf0ycE5gzni7Uj8g/exec";
+
+const sheets = [
+    "QB Stats",
+    "RB Stats",
+    "WR Stats",
+    "DEF Stats",
+    "ST Stats",
+    "Team Stats",
+    "QB Leaders",
+    "RB Leaders",
+    "WR Leaders",
+    "DEF Leaders",
+    "ST Leaders",
+    "Player Rankings"
+];
+
+const menu = document.getElementById("menu");
+const content = document.getElementById("content");
+
+sheets.forEach(sheet => {
+    const btn = document.createElement("div");
+    btn.className = "nav-btn";
+    btn.innerText = sheet;
+    btn.onclick = () => loadSection(sheet, btn);
+    menu.appendChild(btn);
+});
+
+async function loadSection(sheet, btn) {
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+
+    const res = await fetch(`${API}?sheet=${encodeURIComponent(sheet)}`);
+    const data = await res.json();
+
+    const table = buildTable(data);
+
+    content.innerHTML = `
+        <section class="section" style="display:block;">
+            <h2>${sheet}</h2>
+            ${table}
+        </section>
+    `;
+}
+
+function buildTable(data) {
+    if (!data || data.length === 0) return "<p>No data available.</p>";
+
+    const headers = Object.keys(data[0]);
+
+    let thead = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+    let tbody = data
+        .map(row =>
+            "<tr>" +
+            headers.map(h => `<td>${row[h] !== undefined ? row[h] : ""}</td>`).join("") +
+            "</tr>"
+        )
+        .join("");
+
+    return `<table>${thead}${tbody}</table>`;
+}
+
+// Load default on first sheet
+window.onload = () => {
+    const firstBtn = document.querySelector(".nav-btn");
+    if (firstBtn) {
+        loadSection("QB Stats", firstBtn);
+    }
+};
+</script>
+
+</body>
+</html>
